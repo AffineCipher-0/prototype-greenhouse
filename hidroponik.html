@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green House App | Otomatisasi Hidroponik</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Mengatur agar aplikasi terlihat seperti mobile di desktop */
+        .mobile-container {
+            max-width: 420px;
+            height: 85vh;
+            max-height: 900px;
+        }
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; /* slate-100 */
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #94a3b8; /* slate-400 */
+            border-radius: 10px;
+        }
+        /* Efek transisi untuk layar */
+        .screen {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .screen.hidden {
+            opacity: 0;
+            transform: scale(0.98);
+            pointer-events: none;
+        }
+        /* Animasi spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #4f46e5; /* indigo-600 */
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-800 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Kontainer Utama Menyerupai Ponsel -->
+    <div class="mobile-container w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col relative border-8 border-slate-900">
+        
+        <!-- Header Dinamis -->
+        <header id="app-header" class="bg-white p-4 shadow-md flex items-center justify-between z-10">
+            <button id="back-button" class="text-slate-700">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <h1 id="header-title" class="text-xl font-bold text-slate-800">Green House</h1>
+            <div class="w-6"></div> <!-- Spacer -->
+        </header>
+
+        <!-- Menu Samping (Navigation Drawer) -->
+        <div id="side-menu" class="fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform -translate-x-full transition-transform duration-300">
+            <div class="p-4 border-b">
+                 <h2 class="text-lg font-bold">Menu Navigasi</h2>
+            </div>
+            <nav class="mt-4">
+                <a href="#" class="nav-link block py-3 px-4 text-slate-700 hover:bg-slate-100" data-target="main-screen"><i data-lucide="home" class="inline-block w-5 h-5 mr-2"></i>Dashboard</a>
+                <a href="#" class="nav-link block py-3 px-4 text-slate-700 hover:bg-slate-100" data-target="config-screen"><i data-lucide="settings-2" class="inline-block w-5 h-5 mr-2"></i>Konfigurasi Hardware</a>
+                <a href="#" class="nav-link block py-3 px-4 text-slate-700 hover:bg-slate-100" data-target="connection-screen"><i data-lucide="wifi" class="inline-block w-5 h-5 mr-2"></i>Koneksi Greenhouse</a>
+                <a href="#" class="nav-link block py-3 px-4 text-slate-700 hover:bg-slate-100" data-target="messages-screen"><i data-lucide="message-square" class="inline-block w-5 h-5 mr-2"></i>Pesan Greenhouse</a>
+                <a href="#" class="nav-link block py-3 px-4 text-slate-700 hover:bg-slate-100" data-target="login-screen"><i data-lucide="log-out" class="inline-block w-5 h-5 mr-2"></i>Logout</a>
+            </nav>
+        </div>
+        <div id="menu-overlay" class="fixed inset-0 bg-black/40 z-40 hidden"></div>
+
+        <!-- Konten Aplikasi (Layar-layar) -->
+        <main class="flex-grow overflow-y-auto bg-slate-50 relative custom-scrollbar">
+            
+            <!-- Layar Login -->
+            <div id="login-screen" class="screen p-8 flex flex-col justify-center h-full">
+                <h2 class="text-4xl font-bold text-slate-800 text-center mb-2">Green House</h2>
+                <p class="text-center text-slate-500 mb-10">Silakan login untuk melanjutkan</p>
+                <div class="space-y-6">
+                    <div>
+                        <label for="username" class="text-sm font-medium text-slate-600">Username</label>
+                        <input type="text" id="username" value="petugas_01" class="mt-1 w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label for="password" class="text-sm font-medium text-slate-600">Password</label>
+                        <input type="password" id="password" value="●●●●●●●●" class="mt-1 w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                <button id="login-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg mt-10 hover:bg-blue-700 transition-colors">Login</button>
+                <a href="#" class="text-center text-sm text-blue-600 mt-4 block">Lupa password?</a>
+            </div>
+
+            <!-- Layar Utama (Dashboard) -->
+            <div id="main-screen" class="screen hidden p-4 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-semibold text-slate-600">Sensor Air</h3>
+                        <p class="text-sm">Suhu Air: <span class="font-bold" id="data-suhu-air">20°C</span></p>
+                        <p class="text-sm">EC Air: <span class="font-bold" id="data-ec-air">1.5 s/cm</span></p>
+                        <p class="text-sm">pH Air: <span class="font-bold" id="data-ph-air">4.5</span></p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow flex flex-col items-center justify-center">
+                        <h3 class="font-semibold text-slate-600">Ketinggian Air</h3>
+                        <div class="flex items-center gap-2 mt-2">
+                            <i data-lucide="droplets" class="text-blue-500"></i>
+                            <p class="text-3xl font-bold">30 <span class="text-base font-normal">cm</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="font-semibold text-slate-600">Sensor Udara</h3>
+                    <p class="text-sm">Suhu Udara: <span class="font-bold" id="data-suhu-udara">35°C</span></p>
+                    <p class="text-sm">Kelembapan: <span class="font-bold" id="data-kelembapan">67% RH</span></p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow space-y-3">
+                    <h3 class="font-semibold text-slate-600">Kontrol Nutrisi AB</h3>
+                    <input type="number" placeholder="Masukkan jumlah ml" class="w-full p-2 border border-slate-300 rounded-md">
+                    <button class="w-full bg-blue-500 text-white text-sm font-bold py-2 rounded-md hover:bg-blue-600">Kirim</button>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow space-y-3">
+                    <h3 class="font-semibold text-slate-600">Kontrol pH</h3>
+                    <input type="number" placeholder="Masukkan jumlah pH" class="w-full p-2 border border-slate-300 rounded-md">
+                    <button class="w-full bg-blue-500 text-white text-sm font-bold py-2 rounded-md hover:bg-blue-600">Kirim</button>
+                </div>
+            </div>
+            
+            <!-- Layar Koneksi -->
+            <div id="connection-screen" class="screen hidden p-6">
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md mb-6">
+                    <p class="font-bold">Status: Tidak tersambung ke greenhouse</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="ssid" class="text-sm font-medium text-slate-600">SSID (Nama WiFi)</label>
+                        <input type="text" id="ssid" class="mt-1 w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label for="wifi-password" class="text-sm font-medium text-slate-600">Password</label>
+                        <input type="password" id="wifi-password" class="mt-1 w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                 <button class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg mt-8 hover:bg-blue-700 transition-colors">Simpan & Sambungkan</button>
+            </div>
+            
+            <!-- Layar Pesan -->
+            <div id="messages-screen" class="screen hidden p-4">
+                <div class="bg-white p-4 rounded-lg shadow space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="bg-blue-100 p-2 rounded-full">
+                            <i data-lucide="bell" class="w-5 h-5 text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Status Hidroponik</h4>
+                            <p class="text-sm text-slate-500">Semua sistem berjalan normal.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-red-100 p-2 rounded-full">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Peringatan: Kekurangan pH</h4>
+                            <p class="text-sm text-slate-500">Tingkat pH air di bawah ambang batas normal. Segera lakukan penyesuaian.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-orange-100 p-2 rounded-full">
+                            <i data-lucide="thermometer-sun" class="w-5 h-5 text-orange-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Info: Suhu Air Naik</h4>
+                            <p class="text-sm text-slate-500">Suhu air mengalami kenaikan. Sistem pendingin otomatis aktif.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layar Konfigurasi (Placeholder) -->
+            <div id="config-screen" class="screen hidden p-6 text-center">
+                <i data-lucide="settings-2" class="w-16 h-16 mx-auto text-slate-400 mb-4"></i>
+                <h3 class="text-xl font-bold">Konfigurasi Hardware</h3>
+                <p class="text-slate-500 mt-2">Halaman ini digunakan untuk menambah atau mengurangi jumlah jalur pipa hidroponik yang terhubung ke sistem.</p>
+            </div>
+
+        </main>
+        
+        <!-- Tombol Aksi AI (Floating Action Button) -->
+        <button id="ai-assistant-button" class="absolute bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg z-20 transition-transform transform hover:scale-110 hidden">
+             <i data-lucide="sparkles" class="w-6 h-6"></i>
+        </button>
+    </div>
+    
+    <!-- Modal AI Assistant -->
+    <div id="ai-assistant-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+        <div id="ai-modal-content" class="bg-white rounded-2xl shadow-xl w-full max-w-md transform transition-all scale-95 opacity-0">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-bold flex items-center gap-2"><i data-lucide="brain-circuit" class="text-indigo-500"></i>Asisten Hidroponik AI</h3>
+                <button id="close-ai-modal" class="text-slate-500 hover:text-slate-800"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6">
+                <div id="ai-loading" class="text-center">
+                    <div class="spinner w-12 h-12 mx-auto border-4 rounded-full"></div>
+                    <p class="mt-4 text-slate-600">Menganalisis data sensor...</p>
+                </div>
+                <div id="ai-response" class="hidden space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
+                    <!-- Konten dari AI akan muncul di sini -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        lucide.createIcons();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const screens = document.querySelectorAll('.screen');
+            const header = document.getElementById('app-header');
+            const headerTitle = document.getElementById('header-title');
+            const backButton = document.getElementById('back-button');
+            const sideMenu = document.getElementById('side-menu');
+            const menuOverlay = document.getElementById('menu-overlay');
+            const aiAssistantButton = document.getElementById('ai-assistant-button');
+
+            const screenTitles = {
+                'login-screen': 'Green House',
+                'main-screen': 'Green House',
+                'connection-screen': 'Koneksi Greenhouse',
+                'messages-screen': 'Pesan',
+                'config-screen': 'Konfigurasi'
+            };
+
+            function navigateTo(screenId) {
+                screens.forEach(s => s.classList.add('hidden'));
+                const targetScreen = document.getElementById(screenId);
+                if (targetScreen) {
+                    targetScreen.classList.remove('hidden');
+                }
+                header.classList.toggle('hidden', screenId === 'login-screen');
+                aiAssistantButton.classList.toggle('hidden', screenId !== 'main-screen');
+                headerTitle.textContent = screenTitles[screenId] || 'Green House';
+
+                if (screenId === 'main-screen') {
+                    backButton.innerHTML = `<i data-lucide="menu" class="w-6 h-6"></i>`;
+                } else {
+                    backButton.innerHTML = `<i data-lucide="arrow-left" class="w-6 h-6"></i>`;
+                }
+                lucide.createIcons();
+                closeMenu();
+            }
+
+            function openMenu() {
+                sideMenu.classList.remove('-translate-x-full');
+                menuOverlay.classList.remove('hidden');
+            }
+            function closeMenu() {
+                sideMenu.classList.add('-translate-x-full');
+                menuOverlay.classList.add('hidden');
+            }
+            
+            menuOverlay.addEventListener('click', closeMenu);
+            backButton.addEventListener('click', () => {
+                const currentScreen = Array.from(screens).find(s => !s.classList.contains('hidden')).id;
+                if (currentScreen === 'main-screen') {
+                    openMenu();
+                } else {
+                    navigateTo('main-screen');
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = e.currentTarget.dataset.target;
+                    navigateTo(targetId);
+                });
+            });
+
+            document.getElementById('login-button').addEventListener('click', () => {
+                navigateTo('main-screen');
+            });
+            
+            // --- Gemini AI Assistant Logic ---
+            const aiModal = document.getElementById('ai-assistant-modal');
+            const aiModalContent = document.getElementById('ai-modal-content');
+            const closeAiModalButton = document.getElementById('close-ai-modal');
+            const aiLoading = document.getElementById('ai-loading');
+            const aiResponseContainer = document.getElementById('ai-response');
+
+            aiAssistantButton.addEventListener('click', () => {
+                aiModal.classList.remove('hidden');
+                setTimeout(() => aiModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+                getAiAnalysis();
+            });
+
+            const closeAiModal = () => {
+                aiModalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    aiModal.classList.add('hidden');
+                    aiLoading.classList.remove('hidden');
+                    aiResponseContainer.classList.add('hidden');
+                    aiResponseContainer.innerHTML = ''; // Membersihkan konten
+                }, 300);
+            };
+
+            closeAiModalButton.addEventListener('click', closeAiModal);
+            aiModal.addEventListener('click', (e) => {
+                if(e.target === aiModal) closeAiModal();
+            });
+
+            async function getAiAnalysis() {
+                // Menampilkan loading spinner
+                aiLoading.classList.remove('hidden');
+                aiResponseContainer.classList.add('hidden');
+
+                // Simulasi pemanggilan API dengan jeda 1.5 detik
+                setTimeout(() => {
+                    const standardResponseHtml = `
+                        <h4 class='font-bold text-slate-800'>Ringkasan Kondisi</h4>
+                        <p class="text-sm text-slate-600 mt-1">Kondisi greenhouse saat ini terpantau kurang ideal. Tingkat keasaman (pH) air berada di bawah batas normal, yang dapat menghambat penyerapan nutrisi oleh tanaman. Selain itu, suhu udara terdeteksi cukup tinggi.</p>
+                        <h4 class='font-bold text-slate-800 mt-4'>Potensi Masalah</h4>
+                        <ul class='list-disc list-inside space-y-1 text-sm text-slate-600 mt-1'>
+                          <li><strong>pH Rendah:</strong> Akar tanaman bisa rusak dan pertumbuhan terhambat.</li>
+                          <li><strong>Suhu Tinggi:</strong> Tanaman berisiko stres karena panas (heat stress), yang dapat mengurangi kualitas dan hasil panen.</li>
+                        </ul>
+                        <h4 class='font-bold text-slate-800 mt-4'>Rekomendasi Tindakan</h4>
+                        <ul class='list-disc list-inside space-y-1 text-sm text-slate-600 mt-1'>
+                          <li><strong>Tindakan Segera:</strong> Lakukan penyesuaian pH air dengan menambahkan larutan pH Up sesuai dosis yang dianjurkan.</li>
+                          <li><strong>Pemantauan:</strong> Aktifkan sistem pendingin atau ventilasi tambahan untuk menurunkan suhu udara.</li>
+                          <li><strong>Pemeriksaan:</strong> Periksa kembali kalibrasi sensor pH untuk memastikan akurasi data.</li>
+                        </ul>
+                    `;
+
+                    aiResponseContainer.innerHTML = standardResponseHtml;
+                    
+                    aiLoading.classList.add('hidden');
+                    aiResponseContainer.classList.remove('hidden');
+
+                }, 1500); // Jeda 1.5 detik untuk simulasi
+            }
+            
+            navigateTo('login-screen');
+        });
+    </script>
+</body>
+</html>
+
