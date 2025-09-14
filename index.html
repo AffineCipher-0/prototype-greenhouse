@@ -1,35 +1,44 @@
-<!-- Chosen Palette: Agritech Modern -->
-<!-- Application Structure Plan: A single-page application simulating a functional monitoring dashboard. The structure is based on the SRS mockups, with a main dashboard view and separate, JS-controlled views for Connection, Configuration, and Alerts. This task-oriented structure was chosen to create an interactive prototype that demonstrates the analytical and control functions of the proposed system, shifting the focus from promotion to functional simulation. -->
-<!-- Visualization & Content Choices: Main Dashboard (Goal: Inform/Control) -> Dynamic text fields updated by JS -> Simulates real-time sensor data. Control Inputs (Goal: Interact) -> Functional HTML forms -> Allows user interaction. Navigation (Goal: Organize) -> JS-powered view switching -> Simulates a multi-screen mobile app experience. All elements are built with HTML/CSS and interactive JS to fulfill the SRS design without using SVG/Mermaid. -->
-<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Analisis: Greenhouse Cerdas</title>
+    <title>Dasbor Analisis: Greenhouse Cerdas v5</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #e2e8f0;
+            background-color: #f1f5f9;
         }
         #app-container {
-            max-width: 420px;
-            height: 850px;
+            max-width: 390px;
+            height: 860px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        .view {
-            display: none;
+        .view { display: none; }
+        .view.active { display: block; }
+        #nav-menu { transition: transform 0.3s ease-in-out; }
+        .toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            background-color: #2d3748;
+            color: white;
+            border-radius: 9999px;
+            font-size: 14px;
+            z-index: 50;
+            transition: bottom 0.5s ease-in-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .view.active {
-            display: block;
-        }
-        #nav-menu {
-            transition: transform 0.3s ease-in-out;
+        .toast.show {
+            bottom: 30px;
         }
     </style>
 </head>
@@ -39,91 +48,113 @@
         <div id="main-view" class="h-full flex flex-col">
             <header class="bg-white p-4 flex items-center justify-between border-b z-20">
                 <button id="menu-btn" class="p-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    <i class="ph-bold ph-list text-2xl"></i>
                 </button>
-                <h1 id="view-title" class="text-xl font-bold">Green House</h1>
+                <h1 id="view-title" class="text-lg font-bold">Green House</h1>
                 <div class="w-8"></div>
             </header>
             
-            <main class="flex-grow overflow-y-auto p-4 bg-gray-50">
+            <main class="flex-grow overflow-y-auto p-4 bg-slate-50">
                 <!-- Dashboard View -->
                 <div id="dashboard-view" class="view active space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white p-3 rounded-lg border">
-                            <p class="text-sm text-gray-500">Suhu Air</p>
-                            <p id="suhu-air" class="text-2xl font-bold">20.0°C</p>
-                            <p class="text-sm text-gray-500 mt-2">EC Air</p>
-                            <p id="ec-air" class="text-lg font-semibold">1.5 s/cm</p>
-                            <p class="text-sm text-gray-500 mt-2">pH Air</p>
-                            <p id="ph-air" class="text-lg font-semibold">4.5</p>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg border text-center">
-                            <p class="text-sm text-gray-500">Ketinggian Air</p>
-                             <div class="text-5xl font-bold my-4" id="ketinggian-air">30</div>
-                             <p class="text-xs text-gray-400">Level Optimal</p>
+                    <div class="bg-white p-4 rounded-lg border">
+                        <h3 class="text-sm font-semibold text-gray-600 mb-3">Status Air</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3"><i class="ph ph-thermometer-cold text-xl text-blue-500"></i><span class="text-sm text-gray-700">Suhu Air</span></div><span id="suhu-air" class="font-bold text-md">20.0°C</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3"><i class="ph ph-plant text-xl text-green-500"></i><span class="text-sm text-gray-700">EC Air</span></div><span id="ec-air" class="font-bold text-md">1.5 s/cm</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3"><i class="ph ph-drop text-xl text-orange-500"></i><span class="text-sm text-gray-700">pH Air</span></div><span id="ph-air" class="font-bold text-md">4.5</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3"><i class="ph ph-waves text-xl text-cyan-500"></i><span class="text-sm text-gray-700">Ketinggian Air</span></div><span id="ketinggian-air" class="font-bold text-md">30 cm</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-white p-3 rounded-lg border">
-                         <p class="text-sm text-gray-500">Suhu Udara</p>
-                         <p id="suhu-udara" class="text-xl font-bold">35°C</p>
-                         <p class="text-sm text-gray-500 mt-2">Kelembapan Udara</p>
-                         <p id="kelembapan-udara" class="text-xl font-bold">67% RH</p>
+                     <div class="bg-white p-4 rounded-lg border">
+                         <h3 class="text-sm font-semibold text-gray-600 mb-2">Tren Udara Greenhouse</h3>
+                         <canvas id="env-chart" height="120"></canvas>
                     </div>
                     <div class="bg-white p-4 rounded-lg border">
-                        <label for="kontrol-nutrisi" class="block text-sm font-medium text-gray-700">Kontrol Nutrisi AB:</label>
-                        <input type="number" id="kontrol-nutrisi" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Masukan jumlah ml">
-                        <button class="mt-2 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">Kirim</button>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg border">
-                        <label for="kontrol-ph" class="block text-sm font-medium text-gray-700">Kontrol pH:</label>
-                        <input type="number" step="0.1" id="kontrol-ph" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Masukan jumlah pH">
-                        <button class="mt-2 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">Kirim</button>
+                        <h3 class="text-sm font-semibold text-gray-600 mb-3">Kontrol Sistem</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="kontrol-nutrisi" class="block text-sm font-medium text-gray-700 mb-1">Nutrisi AB (ml)</label>
+                                <div class="flex space-x-2">
+                                    <input type="number" id="kontrol-nutrisi" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g. 50">
+                                    <button id="send-nutrisi" class="bg-blue-600 text-white px-4 rounded-md hover:bg-blue-700 flex-shrink-0">Kirim</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="kontrol-ph" class="block text-sm font-medium text-gray-700 mb-1">pH Up/Down (ml)</label>
+                                <div class="flex space-x-2">
+                                    <input type="number" step="0.1" id="kontrol-ph" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g. 10">
+                                    <button id="send-ph" class="bg-blue-600 text-white px-4 rounded-md hover:bg-blue-700 flex-shrink-0">Kirim</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Koneksi View -->
-                <div id="koneksi-view" class="view p-4 space-y-4">
-                     <div id="status-koneksi" class="text-center p-3 rounded-md bg-red-100 text-red-700">Status: Tidak tersambung ke greenhouse</div>
-                     <div>
-                         <label for="ssid" class="block text-sm font-medium text-gray-700">SSID</label>
-                         <input type="text" id="ssid" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Nama WiFi Greenhouse">
-                     </div>
-                     <div>
-                         <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                         <input type="password" id="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
-                     </div>
-                     <button id="connect-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">SIMPAN & SAMBUNGKAN</button>
+                <div id="koneksi-view" class="view">
+                    <div class="bg-white p-4 rounded-lg border">
+                        <div class="space-y-4">
+                             <div class="flex flex-col items-center text-center">
+                                <i class="ph ph-wifi-high text-4xl text-indigo-500"></i>
+                                <h3 class="text-lg font-semibold mt-2">Koneksi Greenhouse</h3>
+                                <p class="text-sm text-gray-600 pb-2">Hubungkan aplikasi dengan perangkat keras di greenhouse Anda.</p>
+                            </div>
+                            <div id="status-koneksi" class="text-center p-3 rounded-md bg-red-100 text-red-700">Status: Tidak tersambung</div>
+                            <div>
+                                <label for="ssid" class="block text-sm font-medium text-gray-700">SSID</label>
+                                <input type="text" id="ssid" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Nama WiFi Greenhouse">
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                                <input type="password" id="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                            </div>
+                            <button id="connect-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">SIMPAN & SAMBUNGKAN</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Pesan View -->
-                <div id="pesan-view" class="view space-y-3">
-                    <div id="pesan-list">
-                         <div class="bg-white p-4 rounded-lg border flex items-center space-x-3">
-                            <span class="text-yellow-500">⚠️</span>
-                            <div>
-                                <p class="font-semibold">Kekurangan pH</p>
-                                <p class="text-sm text-gray-500">Terdeteksi 2 menit lalu</p>
+                <div id="pesan-view" class="view">
+                    <div class="bg-white p-4 rounded-lg border">
+                        <div class="space-y-4">
+                             <div class="flex flex-col items-center text-center">
+                                <i class="ph ph-bell text-4xl text-orange-500"></i>
+                                <h3 class="text-lg font-semibold mt-2">Pusat Notifikasi</h3>
+                                <p class="text-sm text-gray-600 pb-2">Peringatan dan pembaruan sistem akan muncul di sini.</p>
                             </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg border flex items-center space-x-3">
-                            <span class="text-red-500">🌡️</span>
-                            <div>
-                                <p class="font-semibold">Suhu Air Naik</p>
-                                <p class="text-sm text-gray-500">Terdeteksi 5 menit lalu</p>
+                            <div id="pesan-list" class="space-y-3 pt-4 border-t">
+                                <!-- Pesan akan ditambahkan secara dinamis oleh JavaScript -->
                             </div>
                         </div>
                     </div>
                 </div>
 
+
                 <!-- Konfigurasi View -->
-                <div id="konfigurasi-view" class="view p-4 space-y-4">
-                    <h3 class="text-lg font-semibold">Konfigurasi Jalur Pipa</h3>
-                    <p class="text-sm text-gray-600">Sesuaikan jumlah jalur pipa hidroponik yang aktif dan dipantau oleh sistem.</p>
-                     <div>
-                         <label for="jumlah-pipa" class="block text-sm font-medium text-gray-700">Jumlah Jalur Pipa Aktif</label>
-                         <input type="number" id="jumlah-pipa" value="150" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                <div id="konfigurasi-view" class="view">
+                     <div class="bg-white p-4 rounded-lg border">
+                        <div class="space-y-3">
+                            <div class="flex flex-col items-center text-center">
+                                <i class="ph ph-gear text-4xl text-green-500"></i>
+                                <h3 class="text-lg font-semibold mt-2">Konfigurasi Hardware</h3>
+                            </div>
+                            <p class="text-sm text-center text-gray-600 pb-2">Sesuaikan jumlah jalur pipa hidroponik yang aktif dan dipantau oleh sistem.</p>
+                            <div>
+                                <label for="jumlah-pipa" class="block text-sm font-medium text-gray-700">Jumlah Jalur Pipa Aktif</label>
+                                <input type="number" id="jumlah-pipa" value="150" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                            </div>
+                             <button id="save-config-btn" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">SIMPAN KONFIGURASI</button>
+                        </div>
                      </div>
-                      <button class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">SIMPAN KONFIGURASI</button>
                 </div>
 
             </main>
@@ -131,7 +162,7 @@
 
         <!-- Navigation Menu -->
         <div id="nav-menu" class="absolute top-0 left-0 h-full w-64 bg-gray-800 text-white p-6 z-30 transform -translate-x-full">
-            <h2 class="text-2xl font-bold mb-8">Menu</h2>
+            <h2 class="text-xl font-bold mb-8">Menu</h2>
             <nav class="space-y-4">
                 <a href="#" class="nav-link block" data-view="dashboard-view" data-title="Green House">Dasbor Utama</a>
                 <a href="#" class="nav-link block" data-view="konfigurasi-view" data-title="Konfigurasi Hardware">Konfigurasi Hardware</a>
@@ -142,6 +173,8 @@
         <div id="overlay" class="absolute inset-0 bg-black opacity-0 z-20 pointer-events-none transition-opacity duration-300"></div>
 
     </div>
+    
+    <div id="toast-notification" class="toast"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -155,66 +188,140 @@
                 connected: false,
             };
 
+            const chartData = {
+                labels: [],
+                datasets: [{
+                    label: 'Suhu Udara (°C)',
+                    data: [],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    fill: true,
+                    yAxisID: 'y',
+                    tension: 0.3
+                }, {
+                    label: 'Kelembapan (%RH)',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    yAxisID: 'y1',
+                    tension: 0.3
+                }]
+            };
+
             const menuBtn = document.getElementById('menu-btn');
             const navMenu = document.getElementById('nav-menu');
             const overlay = document.getElementById('overlay');
             const viewTitle = document.getElementById('view-title');
             const navLinks = document.querySelectorAll('.nav-link');
             const views = document.querySelectorAll('.view');
-            
             const connectBtn = document.getElementById('connect-btn');
             const statusKoneksi = document.getElementById('status-koneksi');
+            const saveConfigBtn = document.getElementById('save-config-btn');
+            const jumlahPipaInput = document.getElementById('jumlah-pipa');
+            const pesanList = document.getElementById('pesan-list');
+            const toast = document.getElementById('toast-notification');
+
+            function showToast(message) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
 
             function toggleMenu() {
                 navMenu.classList.toggle('-translate-x-full');
-                if (!navMenu.classList.contains('-translate-x-full')) {
-                    overlay.classList.remove('opacity-0');
-                    overlay.classList.add('opacity-50');
-                    overlay.classList.remove('pointer-events-none');
-                } else {
-                    overlay.classList.add('opacity-0');
-                    overlay.classList.remove('opacity-50');
-                    overlay.classList.add('pointer-events-none');
-                }
+                overlay.classList.toggle('opacity-50');
+                overlay.classList.toggle('pointer-events-none');
             }
             
             menuBtn.addEventListener('click', toggleMenu);
             overlay.addEventListener('click', toggleMenu);
 
             function showView(viewId, title) {
-                views.forEach(view => {
-                    view.classList.remove('active');
-                });
+                views.forEach(view => view.classList.remove('active'));
                 document.getElementById(viewId).classList.add('active');
                 viewTitle.textContent = title;
-                toggleMenu();
+                if (!navMenu.classList.contains('-translate-x-full')) {
+                    toggleMenu();
+                }
             }
 
             navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const viewId = e.target.dataset.view;
-                    const title = e.target.dataset.title;
-                    showView(viewId, title);
+                    showView(e.target.dataset.view, e.target.dataset.title);
                 });
             });
             
+            const ctx = document.getElementById('env-chart').getContext('2d');
+            const envChart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { display: true, ticks: { maxTicksLimit: 5 } },
+                        y: { type: 'linear', display: true, position: 'left', title: { display: false }, suggestedMin: 10, suggestedMax: 40},
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: false }, grid: { drawOnChartArea: false }, suggestedMin: 40, suggestedMax: 90 }
+                    },
+                    plugins: { legend: { display: false } },
+                    elements: { point: { radius: 0 } }
+                }
+            });
+
             connectBtn.addEventListener('click', () => {
                 statusKoneksi.textContent = 'Menyambungkan...';
-                statusKoneksi.classList.remove('bg-red-100', 'text-red-700');
-                statusKoneksi.classList.add('bg-yellow-100', 'text-yellow-700');
-
+                statusKoneksi.className = 'text-center p-3 rounded-md bg-yellow-100 text-yellow-700';
                 setTimeout(() => {
                     appState.connected = true;
-                    statusKoneksi.textContent = 'Status: Tersambung ke greenhouse';
-                    statusKoneksi.classList.remove('bg-yellow-100', 'text-yellow-700');
-                    statusKoneksi.classList.add('bg-green-100', 'text-green-700');
+                    statusKoneksi.textContent = 'Status: Tersambung';
+                    statusKoneksi.className = 'text-center p-3 rounded-md bg-green-100 text-green-700';
+                    showToast('Berhasil tersambung ke Greenhouse!');
+                    addPesan('info', 'Koneksi Terhubung', 'Sistem berhasil terhubung ke greenhouse.');
                 }, 2000);
             });
 
+            function loadConfig() {
+                const savedPipes = localStorage.getItem('jumlahPipa');
+                if (savedPipes) {
+                    jumlahPipaInput.value = savedPipes;
+                }
+            }
+            saveConfigBtn.addEventListener('click', () => {
+                localStorage.setItem('jumlahPipa', jumlahPipaInput.value);
+                showToast('Konfigurasi berhasil disimpan!');
+            });
+            
+            function addPesan(type, title, text) {
+                const icons = {
+                    warning: 'ph ph-warning-circle',
+                    error: 'ph ph-fire',
+                    info: 'ph ph-check-circle'
+                };
+                const colors = {
+                    warning: 'yellow',
+                    error: 'red',
+                    info: 'green'
+                };
+                const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+                const pesanDiv = document.createElement('div');
+                pesanDiv.className = `bg-white p-4 rounded-lg border flex items-center space-x-3`;
+                pesanDiv.innerHTML = `
+                    <i class="${icons[type]} text-3xl text-${colors[type]}-500"></i>
+                    <div>
+                        <p class="font-semibold">${title}</p>
+                        <p class="text-sm text-gray-500">${text} - ${time}</p>
+                    </div>`;
+                pesanList.prepend(pesanDiv);
+            }
+
             function updateDashboard() {
                 if (!appState.connected) return;
-
+                
                 appState.suhuAir += (Math.random() - 0.5) * 0.2;
                 appState.ecAir += (Math.random() - 0.5) * 0.1;
                 appState.phAir += (Math.random() - 0.5) * 0.05;
@@ -225,12 +332,35 @@
                 document.getElementById('suhu-air').textContent = `${appState.suhuAir.toFixed(1)}°C`;
                 document.getElementById('ec-air').textContent = `${appState.ecAir.toFixed(1)} s/cm`;
                 document.getElementById('ph-air').textContent = appState.phAir.toFixed(1);
-                document.getElementById('ketinggian-air').textContent = Math.round(appState.ketinggianAir);
-                document.getElementById('suhu-udara').textContent = `${appState.suhuUdara.toFixed(0)}°C`;
-                document.getElementById('kelembapan-udara').textContent = `${Math.round(appState.kelembapanUdara)}% RH`;
+                document.getElementById('ketinggian-air').textContent = `${Math.round(appState.ketinggianAir)} cm`;
+
+                const now = new Date().toLocaleTimeString('id-ID', { minute: '2-digit', second: '2-digit' });
+                chartData.labels.push(now);
+                chartData.datasets[0].data.push(appState.suhuUdara.toFixed(1));
+                chartData.datasets[1].data.push(Math.round(appState.kelembapanUdara));
+
+                if(chartData.labels.length > 10) {
+                    chartData.labels.shift();
+                    chartData.datasets.forEach(dataset => dataset.data.shift());
+                }
+                envChart.update();
+                
+                if (Math.random() < 0.05) {
+                     addPesan('warning', 'Kekurangan pH', 'Tingkat pH air di bawah ambang batas normal.');
+                }
+                if (Math.random() < 0.03) {
+                    addPesan('error', 'Suhu Air Naik', 'Suhu air terdeteksi melebihi batas aman.');
+                }
             }
             
+            document.getElementById('send-nutrisi').addEventListener('click', () => showToast('Perintah pengiriman nutrisi terkirim.'));
+            document.getElementById('send-ph').addEventListener('click', () => showToast('Perintah penyesuaian pH terkirim.'));
+
+            loadConfig();
             setInterval(updateDashboard, 2000);
+            
+            addPesan('warning', 'Kekurangan pH', 'Terdeteksi 2 menit lalu.');
+            addPesan('error', 'Suhu Air Naik', 'Terdeteksi 5 menit lalu.');
         });
     </script>
 </body>
